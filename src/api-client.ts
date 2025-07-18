@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import fetch from 'node-fetch';
+import * as crypto from 'crypto';
 
 export interface UsageInfo {
     used: number;
@@ -7,6 +8,15 @@ export interface UsageInfo {
 }
 
 export class ContextKeeperAPI {
+    private getExtensionVersion(): string {
+        try {
+            const extension = vscode.extensions.getExtension('contextkeeper.contextkeeper');
+            return extension?.packageJSON?.version || '0.1.0';
+        } catch {
+            return '0.1.0';
+        }
+    }
+
     private getConfig() {
         const config = vscode.workspace.getConfiguration('contextkeeper');
         return {
@@ -16,7 +26,9 @@ export class ContextKeeperAPI {
     }
 
     private generateSessionId(): string {
-        return 'vscode-' + Math.random().toString(36).substr(2, 9);
+        const randomBytes = crypto.randomBytes(6);
+        const randomString = randomBytes.toString('base64url').substring(0, 9);
+        return 'vscode-' + randomString;
     }
 
     async saveSummary(content: string): Promise<void> {
@@ -29,7 +41,7 @@ export class ContextKeeperAPI {
                     'Content-Type': 'application/json',
                     'x-session-id': sessionId,
                     'x-source': 'vscode-extension',
-                    'User-Agent': 'ContextKeeper-VSCode/0.1.0'
+                    'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
                 },
                 body: JSON.stringify({
                     content,
@@ -37,7 +49,7 @@ export class ContextKeeperAPI {
                     source: 'vscode-extension',
                     metadata: {
                         vsCodeVersion: vscode.version,
-                        extensionVersion: '0.1.0'
+                        extensionVersion: this.getExtensionVersion()
                     }
                 })
             });
@@ -65,7 +77,7 @@ export class ContextKeeperAPI {
                 headers: {
                     'x-session-id': sessionId,
                     'x-source': 'vscode-extension',
-                    'User-Agent': 'ContextKeeper-VSCode/0.1.0'
+                    'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
                 }
             });
 

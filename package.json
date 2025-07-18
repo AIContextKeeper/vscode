@@ -1,14 +1,31 @@
 {
   "name": "contextkeeper",
-  "displayName": "ContextKeeper - AI Session Manager",
+  "displayName": "ContextKeeper - AI Session Manager", 
   "description": "Save AI coding conversations, never lose context",
   "version": "0.1.0",
   "publisher": "contextkeeper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/contextkeeper/contextkeeper-vscode.git"
+  },
+  "homepage": "https://contextkeeper.dev",
+  "bugs": {
+    "url": "https://github.com/contextkeeper/contextkeeper-vscode/issues"
+  },
+  "license": "MIT",
+  "keywords": ["ai", "code", "conversation", "session", "context", "claude", "chatgpt", "copilot"],
   "engines": {
     "vscode": "^1.60.0"
   },
-  "categories": ["Other"],
-  "activationEvents": ["*"],
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onCommand:contextkeeper.saveConversation",
+    "onCommand:contextkeeper.showUsage"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -56,11 +73,15 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.60.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
+    "@types/vscode": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
+    "@vscode/test-electron": "^2.5.2",
     "eslint": "^8.20.0",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.1",
     "typescript": "^4.7.4"
   },
   "dependencies": {
