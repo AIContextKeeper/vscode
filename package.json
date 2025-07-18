@@ -1,0 +1,69 @@
+{
+  "name": "contextkeeper",
+  "displayName": "ContextKeeper - AI Session Manager",
+  "description": "Save AI coding conversations, never lose context",
+  "version": "0.1.0",
+  "publisher": "contextkeeper",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextkeeper.saveConversation",
+        "title": "Save AI Conversation",
+        "category": "ContextKeeper"
+      },
+      {
+        "command": "contextkeeper.showUsage",
+        "title": "Show Usage",
+        "category": "ContextKeeper"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "contextkeeper.saveConversation",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "ContextKeeper",
+      "properties": {
+        "contextkeeper.apiEndpoint": {
+          "type": "string",
+          "default": "https://contextkeeper.dev/api",
+          "description": "ContextKeeper API endpoint"
+        },
+        "contextkeeper.sessionId": {
+          "type": "string",
+          "default": "",
+          "description": "Your ContextKeeper session ID"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "@typescript-eslint/parser": "^5.31.0",
+    "eslint": "^8.20.0",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "node-fetch": "^3.2.10"
+  }
+}
