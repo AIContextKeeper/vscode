@@ -13,6 +13,7 @@
     "url": "https://github.com/contextkeeper/contextkeeper-vscode/issues"
   },
   "license": "MIT",
+  "icon": "icon.png",
   "keywords": ["ai", "code", "conversation", "session", "context", "claude", "chatgpt", "copilot"],
   "engines": {
     "vscode": "^1.60.0"
