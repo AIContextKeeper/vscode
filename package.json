@@ -1,7 +1,7 @@
 {
   "name": "contextkeeper",
   "displayName": "ContextKeeper - AI Session Manager", 
-  "description": "Save AI coding conversations, never lose context",
+  "description": "Instantly save A.I coding sessions. Never lose context.",
   "version": "0.1.0",
   "publisher": "contextkeeper",
   "repository": {
