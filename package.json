@@ -1,20 +1,35 @@
 {
   "name": "contextkeeper",
-  "displayName": "ContextKeeper - AI Session Manager", 
-  "description": "Instantly save A.I coding sessions. Never lose context.",
+  "displayName": "ContextKeeper - AI Session Manager",
+  "description": "Never lose context again. Capture Claude, Gemini, and AI conversations when you need them.",
   "version": "0.1.0",
   "publisher": "contextkeeper",
   "repository": {
     "type": "git",
-    "url": "https://github.com/contextkeeper/contextkeeper-vscode.git"
+    "url": "https://github.com/AIContextKeeper/vscode.git"
   },
   "homepage": "https://contextkeeper.dev",
   "bugs": {
-    "url": "https://github.com/contextkeeper/contextkeeper-vscode/issues"
+    "url": "https://github.com/AIContextKeeper/vscode/issues"
   },
   "license": "MIT",
   "icon": "icon.png",
-  "keywords": ["ai", "code", "conversation", "session", "context", "claude", "chatgpt", "copilot"],
+  "keywords": [
+    "ai",
+    "code",
+    "context",
+    "session",
+    "conversation",
+    "claude",
+    "gemini",
+    "chatgpt",
+    "copilot",
+    "cursor",
+    "development",
+    "productivity",
+    "capture",
+    "search"
+  ],
   "engines": {
     "vscode": "^1.60.0"
   },
