@@ -40,7 +40,8 @@
   ],
   "activationEvents": [
     "onCommand:contextkeeper.saveConversation",
-    "onCommand:contextkeeper.showUsage"
+    "onCommand:contextkeeper.showUsage",
+    "onCommand:contextkeeper.openDashboard"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -53,6 +54,11 @@
       {
         "command": "contextkeeper.showUsage",
         "title": "Show Usage",
+        "category": "ContextKeeper"
+      },
+      {
+        "command": "contextkeeper.openDashboard",
+        "title": "Open Dashboard",
         "category": "ContextKeeper"
       }
     ],
@@ -75,7 +81,17 @@
         "contextkeeper.sessionId": {
           "type": "string",
           "default": "",
-          "description": "Your ContextKeeper session ID"
+          "description": "Your ContextKeeper session ID (auto-managed)"
+        },
+        "contextkeeper.preferLocalAgent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prefer sending data through local ContextKeeper agent when available"
+        },
+        "contextkeeper.agentPort": {
+          "type": "number",
+          "default": 8080,
+          "description": "Port for local ContextKeeper agent communication"
         }
       }
     }
