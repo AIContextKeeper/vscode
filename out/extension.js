@@ -30,7 +30,16 @@ function activate(context) {
             vscode.window.showErrorMessage('Failed to retrieve usage information.');
         }
     });
-    context.subscriptions.push(saveConversationCommand, showUsageCommand);
+    const openDashboardCommand = vscode.commands.registerCommand('contextkeeper.openDashboard', async () => {
+        try {
+            const dashboardUrl = await api.getDashboardUrl();
+            await vscode.env.openExternal(vscode.Uri.parse(dashboardUrl));
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to open dashboard: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    });
+    context.subscriptions.push(saveConversationCommand, showUsageCommand, openDashboardCommand);
     vscode.window.showInformationMessage('ContextKeeper extension is now active! Use Ctrl+Shift+K (Cmd+Shift+K on Mac) to save AI conversations.');
 }
 exports.activate = activate;

@@ -38,11 +38,16 @@ export class ContextKeeperAPI {
 
     private async checkAgentHealth(): Promise<boolean> {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            
             const response = await fetch(`http://localhost:${this.agentPort}/health`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 2000
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             return response.ok;
         } catch {
             return false;
@@ -51,11 +56,16 @@ export class ContextKeeperAPI {
 
     private async getSessionFromAgent(): Promise<string | null> {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            
             const response = await fetch(`http://localhost:${this.agentPort}/session`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 2000
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (response.ok) {
                 const data = await response.json() as any;
