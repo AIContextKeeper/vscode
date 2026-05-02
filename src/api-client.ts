@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import fetch from 'node-fetch';
 import * as crypto from 'crypto';
 
 export interface UsageInfo {
@@ -9,10 +8,10 @@ export interface UsageInfo {
 
 export class ContextKeeperAPI {
     private agentPort: number = 8080;
-    
+
     private getExtensionVersion(): string {
         try {
-            const extension = vscode.extensions.getExtension('contextkeeper.contextkeeper');
+            const extension = vscode.extensions.getExtension('contextkeeper-vscode.contextkeeper');
             return extension?.packageJSON?.version || '0.1.0';
         } catch {
             return '0.1.0';
@@ -30,24 +29,16 @@ export class ContextKeeperAPI {
     }
 
     private generateSessionId(): string {
-        const timestamp = Date.now();
-        const randomBytes = crypto.randomBytes(4);
-        const randomHex = randomBytes.toString('hex');
-        return `session_${timestamp}_${randomHex}`;
+        const randomHex = crypto.randomBytes(4).toString('hex');
+        return `session_${Date.now()}_${randomHex}`;
     }
 
     private async checkAgentHealth(): Promise<boolean> {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            
             const response = await fetch(`http://localhost:${this.agentPort}/health`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                signal: controller.signal
+                signal: AbortSignal.timeout(2000)
             });
-            
-            clearTimeout(timeoutId);
             return response.ok;
         } catch {
             return false;
@@ -56,17 +47,10 @@ export class ContextKeeperAPI {
 
     private async getSessionFromAgent(): Promise<string | null> {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            
             const response = await fetch(`http://localhost:${this.agentPort}/session`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                signal: controller.signal
+                signal: AbortSignal.timeout(2000)
             });
-            
-            clearTimeout(timeoutId);
-            
             if (response.ok) {
                 const data = await response.json() as any;
                 return data.session_id || null;
@@ -79,22 +63,19 @@ export class ContextKeeperAPI {
 
     private async getOrCreateSessionId(): Promise<string> {
         const config = this.getConfig();
-        
-        // Try to get session from local agent first
+
         if (config.preferLocalAgent) {
             const agentSessionId = await this.getSessionFromAgent();
             if (agentSessionId) {
-                // Update stored session ID to match agent
                 await this.updateSessionId(agentSessionId);
                 return agentSessionId;
             }
         }
-        
-        // Fall back to stored session ID or generate new one
+
         if (config.sessionId) {
             return config.sessionId;
         }
-        
+
         const newSessionId = this.generateSessionId();
         await this.updateSessionId(newSessionId);
         return newSessionId;
@@ -103,32 +84,22 @@ export class ContextKeeperAPI {
     async saveSummary(content: string): Promise<void> {
         const config = this.getConfig();
         const sessionId = await this.getOrCreateSessionId();
-        
+
         try {
-            // Try to send via local agent first
             if (config.preferLocalAgent && await this.checkAgentHealth()) {
-                await this.saveSummaryViaAgent(content, sessionId);
+                await this.saveSummaryViaAgent(content);
                 return;
             }
-            
-            // Fall back to direct API
             await this.saveSummaryDirect(content, sessionId, config.apiEndpoint);
-            
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Failed to save summary: ${error.message}`);
-            }
-            throw new Error('Failed to save summary: Unknown error');
+            throw new Error(`Failed to save summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 
-    private async saveSummaryViaAgent(content: string, sessionId: string): Promise<void> {
+    private async saveSummaryViaAgent(content: string): Promise<void> {
         const response = await fetch(`http://localhost:${this.agentPort}/sessions`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-source': 'vscode-extension'
-            },
+            headers: { 'Content-Type': 'application/json', 'x-source': 'vscode-extension' },
             body: JSON.stringify({
                 title: this.extractTitle(content),
                 content,
@@ -139,16 +110,12 @@ export class ContextKeeperAPI {
                 priority: 'medium',
                 created_at: new Date().toISOString(),
                 project_path: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-                metadata: {
-                    vsCodeVersion: vscode.version,
-                    extensionVersion: this.getExtensionVersion()
-                }
+                metadata: { vsCodeVersion: vscode.version, extensionVersion: this.getExtensionVersion() }
             })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Agent request failed: ${response.status} ${response.statusText} - ${errorText}`);
+            throw new Error(`Agent request failed: ${response.status} ${response.statusText}`);
         }
     }
 
@@ -165,21 +132,16 @@ export class ContextKeeperAPI {
                 content,
                 timestamp: new Date().toISOString(),
                 source: 'vscode-extension',
-                metadata: {
-                    vsCodeVersion: vscode.version,
-                    extensionVersion: this.getExtensionVersion()
-                }
+                metadata: { vsCodeVersion: vscode.version, extensionVersion: this.getExtensionVersion() }
             })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
     }
 
     private extractTitle(content: string): string {
-        // Extract first line or first 50 characters as title
         const lines = content.split('\n');
         if (lines.length > 0 && lines[0].trim()) {
             const title = lines[0].trim();
@@ -201,7 +163,6 @@ export class ContextKeeperAPI {
 
     async getUsage(): Promise<UsageInfo> {
         const { apiEndpoint, sessionId } = this.getConfig();
-        
         try {
             const response = await fetch(`${apiEndpoint}/usage`, {
                 method: 'GET',
@@ -211,21 +172,13 @@ export class ContextKeeperAPI {
                     'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
                 }
             });
-
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                throw new Error(`API request failed: ${response.status}`);
             }
-
             const data = await response.json() as any;
-            return {
-                used: data.used || 0,
-                limit: data.limit || 50
-            };
-        } catch (error) {
-            return {
-                used: 0,
-                limit: 50
-            };
+            return { used: data.used || 0, limit: data.limit || 50 };
+        } catch {
+            return { used: 0, limit: 50 };
         }
     }
 
@@ -237,7 +190,6 @@ export class ContextKeeperAPI {
     private async updateSessionId(sessionId: string): Promise<void> {
         const config = vscode.workspace.getConfiguration('contextkeeper');
         const currentSessionId = config.get<string>('sessionId');
-        
         if (!currentSessionId || currentSessionId !== sessionId) {
             await config.update('sessionId', sessionId, vscode.ConfigurationTarget.Global);
         }
