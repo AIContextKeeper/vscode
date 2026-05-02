@@ -72,7 +72,21 @@ export class AIDetector {
             content.includes(indicator)
         );
 
-        return hasAIIndicators || (hasCodeIndicators && content.length > 100);
+        // Detect Claude Code CLI terminal output (full session copy)
+        const claudeCodeIndicators = [
+            '⏺',
+            '✻',                         // Claude Code processing indicator (✻ Crunched/Sautéed/etc.)
+            'Resume this session with:',
+            'claude --resume',
+            'Total cost:',
+        ];
+        const isClaudeCodeOutput = claudeCodeIndicators.some(indicator => content.includes(indicator));
+
+        // Detect AI response without code: numbered steps + substantial length
+        const numberedSteps = (content.match(/^\s*\d+\.\s+\S/gm) || []).length;
+        const looksLikeAIResponse = numberedSteps >= 2 && content.length > 400;
+
+        return hasAIIndicators || (hasCodeIndicators && content.length > 100) || isClaudeCodeOutput || looksLikeAIResponse;
     }
 
     parseAIConversation(content: string): string {
