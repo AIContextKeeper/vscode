@@ -25,7 +25,7 @@ export class AIDetector {
         }
     }
 
-    private isAIConversation(content: string): boolean {
+    isAIConversation(content: string): boolean {
         const aiIndicators = [
             'Claude:',
             'Assistant:',
@@ -75,7 +75,7 @@ export class AIDetector {
         return hasAIIndicators || (hasCodeIndicators && content.length > 100);
     }
 
-    private parseAIConversation(content: string): string {
+    parseAIConversation(content: string): string {
         const lines = content.split('\n');
         const parsed = [];
         let currentSpeaker = '';

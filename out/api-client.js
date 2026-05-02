@@ -122,7 +122,7 @@ class ContextKeeperAPI {
                 category: 'development',
                 priority: 'medium',
                 created_at: new Date().toISOString(),
-                project_path: vscode.workspace.rootPath || '',
+                project_path: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
                 metadata: {
                     vsCodeVersion: vscode.version,
                     extensionVersion: this.getExtensionVersion()
@@ -171,9 +171,9 @@ class ContextKeeperAPI {
         if (vscode.workspace.name) {
             return vscode.workspace.name;
         }
-        if (vscode.workspace.rootPath) {
-            const pathParts = vscode.workspace.rootPath.split('/');
-            return pathParts[pathParts.length - 1] || 'Unknown';
+        const folders = vscode.workspace.workspaceFolders;
+        if (folders && folders.length > 0) {
+            return folders[0].name;
         }
         return 'Unknown';
     }
