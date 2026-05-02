@@ -4,52 +4,30 @@ Save AI coding conversations and never lose context again.
 
 ## Features
 
-- **One-click save**: Press `Ctrl+Shift+K` (or `Cmd+Shift+K` on Mac) to save AI conversations
-- **Smart detection**: Automatically detects AI conversations from clipboard content
-- **Multiple AI support**: Works with Claude, ChatGPT, GitHub Copilot, and more
+- **Auto-detection**: Copies an AI conversation? ContextKeeper notices and asks if you want to save — no keypress needed
+- **One-click save**: Press `Ctrl+Shift+K` (or `Cmd+Shift+K` on Mac) to save at any time
+- **Works everywhere**: Trigger from the editor, terminal, or any panel
+- **Status bar indicator**: Always-visible `CK` button in the bottom-right — click to open your dashboard
+- **View Dashboard**: Jump straight to your saved sessions after every save
+- **Multiple AI support**: Works with Claude, ChatGPT, GitHub Copilot, Gemini, and more
 - **Usage tracking**: Monitor your monthly usage limits
-- **Seamless integration**: Works directly in your VS Code workflow
 
-## Installation
+## How it works
 
-1. Install the extension from the VS Code Marketplace
-2. The extension will activate automatically
-3. Use `Ctrl+Shift+K` to save AI conversations
+1. Copy any AI conversation to your clipboard
+2. ContextKeeper detects it automatically and prompts you to save
+3. Click **Save** — your conversation is stored at [contextkeeper.dev](https://contextkeeper.dev)
+4. Click **View Dashboard** to browse, search, and export all your saved sessions
 
-## Usage
+Or skip the prompt entirely and press `Ctrl+Shift+K` to save manually.
 
-### Saving AI Conversations
+## Dashboard
 
-1. Copy an AI conversation to your clipboard
-2. Press `Ctrl+Shift+K` (or `Cmd+Shift+K` on Mac)
-3. The extension will detect and save the conversation to ContextKeeper
+All saved conversations are available at [contextkeeper.dev](https://contextkeeper.dev) — search across sessions, view analytics, and export your data as JSON.
 
-### Checking Usage
+## Checking Usage
 
-- Use the Command Palette (`Ctrl+Shift+P`) and search for "ContextKeeper: Show Usage"
-- View your current usage against monthly limits
-
-## Configuration
-
-Configure the extension in VS Code settings:
-
-- `contextkeeper.apiEndpoint`: API endpoint (default: https://contextkeeper.dev/api)
-- `contextkeeper.sessionId`: Your session ID (auto-generated)
-
-## Development
-
-### Building
-
-```bash
-npm install
-npm run compile
-```
-
-### Testing
-
-```bash
-npm run test
-```
+Open the Command Palette (`Ctrl+Shift+P`) and search for **ContextKeeper: Show Usage**.
 
 ## License
 
