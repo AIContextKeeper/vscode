@@ -2,7 +2,7 @@
   "name": "contextkeeper",
   "displayName": "ContextKeeper - AI Session Manager",
   "description": "Never lose context again. Capture Claude, Gemini, and AI conversations when you need them.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publisher": "contextkeeper-vscode",
   "repository": {
     "type": "git",
@@ -38,12 +38,7 @@
     "Machine Learning",
     "Snippets"
   ],
-  "activationEvents": [
-    "onStartupFinished",
-    "onCommand:contextkeeper.saveConversation",
-    "onCommand:contextkeeper.showUsage",
-    "onCommand:contextkeeper.openDashboard"
-  ],
+  "activationEvents": ["*"],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
