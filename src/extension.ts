@@ -52,15 +52,21 @@ export function activate(context: vscode.ExtensionContext) {
                     'Dismiss'
                 );
                 if (action === 'Save') {
-                    const parsed = aiDetector.parseAIConversation(clipboardText);
-                    await saveAndNotify(parsed);
+                    try {
+                        const parsed = aiDetector.parseAIConversation(clipboardText);
+                        await saveAndNotify(parsed);
+                    } catch (error) {
+                        vscode.window.showErrorMessage(
+                            `Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`
+                        );
+                    }
                 }
             }
             lastClipboardContent = clipboardText;
         } catch {
             // Clipboard read failed, ignore
         }
-    }, 10000);
+    }, 5000);
 
     context.subscriptions.push({ dispose: () => clearInterval(clipboardPoller) });
 

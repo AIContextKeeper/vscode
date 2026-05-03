@@ -129,10 +129,12 @@ export class ContextKeeperAPI {
                 'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
             },
             body: JSON.stringify({
+                title: this.extractTitle(content),
+                project: this.getCurrentProject(),
                 content,
-                timestamp: new Date().toISOString(),
-                source: 'vscode-extension',
-                metadata: { vsCodeVersion: vscode.version, extensionVersion: this.getExtensionVersion() }
+                category: 'development',
+                priority: 'medium',
+                source: 'vscode-extension'
             })
         });
 
