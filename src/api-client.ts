@@ -29,7 +29,7 @@ export class ContextKeeperAPI {
     }
 
     private generateSessionId(): string {
-        const randomHex = crypto.randomBytes(4).toString('hex');
+        const randomHex = crypto.randomBytes(5).toString('hex').substring(0, 9);
         return `session_${Date.now()}_${randomHex}`;
     }
 
