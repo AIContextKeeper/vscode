@@ -2,6 +2,8 @@
 
 Save AI coding conversations and never lose context again.
 
+![ContextKeeper Demo](demo.gif)
+
 ## Features
 
 - **Auto-detection**: Select and copy any AI response and ContextKeeper notices. Works with browser chats (Claude, ChatGPT, Gemini) and terminal AI tools (Claude Code, aider, Copilot CLI)
