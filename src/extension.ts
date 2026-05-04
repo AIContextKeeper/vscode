@@ -20,15 +20,30 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     async function saveAndNotify(content: string) {
-        await api.saveSummary(content);
-        setStatusSaved();
-        const action = await vscode.window.showInformationMessage(
-            '✅ Conversation saved to ContextKeeper!',
-            'View Dashboard'
-        );
-        if (action === 'View Dashboard') {
-            const url = await api.getDashboardUrl();
-            await vscode.env.openExternal(vscode.Uri.parse(url));
+        try {
+            await api.saveSummary(content);
+            setStatusSaved();
+            const action = await vscode.window.showInformationMessage(
+                '✅ Conversation saved to ContextKeeper!',
+                'View Dashboard'
+            );
+            if (action === 'View Dashboard') {
+                const url = await api.getDashboardUrl();
+                await vscode.env.openExternal(vscode.Uri.parse(url));
+            }
+        } catch (error) {
+            if (error instanceof Error && error.message === 'UPGRADE_REQUIRED') {
+                const action = await vscode.window.showWarningMessage(
+                    'Free limit reached (50 sessions). Upgrade to Pro for unlimited saves.',
+                    'Upgrade to Pro',
+                    'Dismiss'
+                );
+                if (action === 'Upgrade to Pro') {
+                    await vscode.env.openExternal(vscode.Uri.parse('https://contextkeeper.dev/pricing'));
+                }
+                return;
+            }
+            throw error;
         }
     }
 
@@ -52,14 +67,8 @@ export function activate(context: vscode.ExtensionContext) {
                     'Dismiss'
                 );
                 if (action === 'Save') {
-                    try {
-                        const parsed = aiDetector.parseAIConversation(clipboardText);
-                        await saveAndNotify(parsed);
-                    } catch (error) {
-                        vscode.window.showErrorMessage(
-                            `Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`
-                        );
-                    }
+                    const parsed = aiDetector.parseAIConversation(clipboardText);
+                    await saveAndNotify(parsed);
                 }
             }
             lastClipboardContent = clipboardText;

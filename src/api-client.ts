@@ -24,7 +24,8 @@ export class ContextKeeperAPI {
             apiEndpoint: config.get<string>('apiEndpoint') || 'https://contextkeeper.dev/api',
             agentPort: config.get<number>('agentPort') || 8080,
             preferLocalAgent: config.get<boolean>('preferLocalAgent') ?? true,
-            sessionId: config.get<string>('sessionId') || ''
+            sessionId: config.get<string>('sessionId') || '',
+            apiKey: config.get<string>('apiKey') || ''
         };
     }
 
@@ -120,14 +121,20 @@ export class ContextKeeperAPI {
     }
 
     private async saveSummaryDirect(content: string, sessionId: string, apiEndpoint: string): Promise<void> {
+        const { apiKey } = this.getConfig();
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'x-session-id': sessionId,
+            'x-source': 'vscode-extension',
+            'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
+        };
+        if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
         const response = await fetch(`${apiEndpoint}/summaries`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-session-id': sessionId,
-                'x-source': 'vscode-extension',
-                'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
-            },
+            headers,
             body: JSON.stringify({
                 title: this.extractTitle(content),
                 project: this.getCurrentProject(),
@@ -137,6 +144,10 @@ export class ContextKeeperAPI {
                 source: 'vscode-extension'
             })
         });
+
+        if (response.status === 429) {
+            throw new Error('UPGRADE_REQUIRED');
+        }
 
         if (!response.ok) {
             throw new Error(`API request failed: ${response.status} ${response.statusText}`);

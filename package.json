@@ -2,7 +2,7 @@
   "name": "contextkeeper",
   "displayName": "ContextKeeper - AI Session Manager",
   "description": "Never lose context again. Capture Claude, Gemini, and AI conversations when you need them.",
-  "version": "0.2.6",
+  "version": "0.2.9",
   "publisher": "contextkeeper-vscode",
   "repository": {
     "type": "git",
@@ -72,6 +72,11 @@
           "type": "string",
           "default": "https://contextkeeper.dev/api",
           "description": "ContextKeeper API endpoint"
+        },
+        "contextkeeper.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your ContextKeeper Pro API key. Get it from contextkeeper.dev/dashboard after subscribing."
         },
         "contextkeeper.sessionId": {
           "type": "string",
