@@ -19,12 +19,24 @@ function activate(context) {
         setTimeout(() => { statusBar.text = '$(database) CK'; }, 3000);
     }
     async function saveAndNotify(content) {
-        await api.saveSummary(content);
-        setStatusSaved();
-        const action = await vscode.window.showInformationMessage('✅ Conversation saved to ContextKeeper!', 'View Dashboard');
-        if (action === 'View Dashboard') {
-            const url = await api.getDashboardUrl();
-            await vscode.env.openExternal(vscode.Uri.parse(url));
+        try {
+            await api.saveSummary(content);
+            setStatusSaved();
+            const action = await vscode.window.showInformationMessage('✅ Conversation saved to ContextKeeper!', 'View Dashboard');
+            if (action === 'View Dashboard') {
+                const url = await api.getDashboardUrl();
+                await vscode.env.openExternal(vscode.Uri.parse(url));
+            }
+        }
+        catch (error) {
+            if (error instanceof Error && error.message === 'UPGRADE_REQUIRED') {
+                const action = await vscode.window.showWarningMessage('Free limit reached (50 sessions). Upgrade to Pro for unlimited saves.', 'Upgrade to Pro', 'Dismiss');
+                if (action === 'Upgrade to Pro') {
+                    await vscode.env.openExternal(vscode.Uri.parse('https://contextkeeper.dev/pricing'));
+                }
+                return;
+            }
+            throw error;
         }
     }
     // Clipboard auto-detection — poll every 5s for AI conversations

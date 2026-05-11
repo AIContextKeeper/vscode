@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContextKeeperAPI = void 0;
 const vscode = require("vscode");
-const node_fetch_1 = require("node-fetch");
 const crypto = require("crypto");
 class ContextKeeperAPI {
     constructor() {
@@ -10,7 +9,7 @@ class ContextKeeperAPI {
     }
     getExtensionVersion() {
         try {
-            const extension = vscode.extensions.getExtension('contextkeeper.contextkeeper');
+            const extension = vscode.extensions.getExtension('contextkeeper-vscode.contextkeeper');
             return extension?.packageJSON?.version || '0.1.0';
         }
         catch {
@@ -23,25 +22,20 @@ class ContextKeeperAPI {
             apiEndpoint: config.get('apiEndpoint') || 'https://contextkeeper.dev/api',
             agentPort: config.get('agentPort') || 8080,
             preferLocalAgent: config.get('preferLocalAgent') ?? true,
-            sessionId: config.get('sessionId') || ''
+            sessionId: config.get('sessionId') || '',
+            apiKey: config.get('apiKey') || ''
         };
     }
     generateSessionId() {
-        const timestamp = Date.now();
-        const randomBytes = crypto.randomBytes(4);
-        const randomHex = randomBytes.toString('hex');
-        return `session_${timestamp}_${randomHex}`;
+        const randomHex = crypto.randomBytes(5).toString('hex').substring(0, 9);
+        return `session_${Date.now()}_${randomHex}`;
     }
     async checkAgentHealth() {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            const response = await (0, node_fetch_1.default)(`http://localhost:${this.agentPort}/health`, {
+            const response = await fetch(`http://localhost:${this.agentPort}/health`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                signal: controller.signal
+                signal: AbortSignal.timeout(2000)
             });
-            clearTimeout(timeoutId);
             return response.ok;
         }
         catch {
@@ -50,14 +44,10 @@ class ContextKeeperAPI {
     }
     async getSessionFromAgent() {
         try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            const response = await (0, node_fetch_1.default)(`http://localhost:${this.agentPort}/session`, {
+            const response = await fetch(`http://localhost:${this.agentPort}/session`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                signal: controller.signal
+                signal: AbortSignal.timeout(2000)
             });
-            clearTimeout(timeoutId);
             if (response.ok) {
                 const data = await response.json();
                 return data.session_id || null;
@@ -70,16 +60,13 @@ class ContextKeeperAPI {
     }
     async getOrCreateSessionId() {
         const config = this.getConfig();
-        // Try to get session from local agent first
         if (config.preferLocalAgent) {
             const agentSessionId = await this.getSessionFromAgent();
             if (agentSessionId) {
-                // Update stored session ID to match agent
                 await this.updateSessionId(agentSessionId);
                 return agentSessionId;
             }
         }
-        // Fall back to stored session ID or generate new one
         if (config.sessionId) {
             return config.sessionId;
         }
@@ -91,28 +78,20 @@ class ContextKeeperAPI {
         const config = this.getConfig();
         const sessionId = await this.getOrCreateSessionId();
         try {
-            // Try to send via local agent first
             if (config.preferLocalAgent && await this.checkAgentHealth()) {
-                await this.saveSummaryViaAgent(content, sessionId);
+                await this.saveSummaryViaAgent(content);
                 return;
             }
-            // Fall back to direct API
             await this.saveSummaryDirect(content, sessionId, config.apiEndpoint);
         }
         catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Failed to save summary: ${error.message}`);
-            }
-            throw new Error('Failed to save summary: Unknown error');
+            throw new Error(`Failed to save summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
-    async saveSummaryViaAgent(content, sessionId) {
-        const response = await (0, node_fetch_1.default)(`http://localhost:${this.agentPort}/sessions`, {
+    async saveSummaryViaAgent(content) {
+        const response = await fetch(`http://localhost:${this.agentPort}/sessions`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-source': 'vscode-extension'
-            },
+            headers: { 'Content-Type': 'application/json', 'x-source': 'vscode-extension' },
             body: JSON.stringify({
                 title: this.extractTitle(content),
                 content,
@@ -123,43 +102,44 @@ class ContextKeeperAPI {
                 priority: 'medium',
                 created_at: new Date().toISOString(),
                 project_path: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '',
-                metadata: {
-                    vsCodeVersion: vscode.version,
-                    extensionVersion: this.getExtensionVersion()
-                }
+                metadata: { vsCodeVersion: vscode.version, extensionVersion: this.getExtensionVersion() }
             })
         });
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Agent request failed: ${response.status} ${response.statusText} - ${errorText}`);
+            throw new Error(`Agent request failed: ${response.status} ${response.statusText}`);
         }
     }
     async saveSummaryDirect(content, sessionId, apiEndpoint) {
-        const response = await (0, node_fetch_1.default)(`${apiEndpoint}/summaries`, {
+        const { apiKey } = this.getConfig();
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-session-id': sessionId,
+            'x-source': 'vscode-extension',
+            'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
+        };
+        if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+        const response = await fetch(`${apiEndpoint}/summaries`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-session-id': sessionId,
-                'x-source': 'vscode-extension',
-                'User-Agent': `ContextKeeper-VSCode/${this.getExtensionVersion()}`
-            },
+            headers,
             body: JSON.stringify({
+                title: this.extractTitle(content),
+                project: this.getCurrentProject(),
                 content,
-                timestamp: new Date().toISOString(),
-                source: 'vscode-extension',
-                metadata: {
-                    vsCodeVersion: vscode.version,
-                    extensionVersion: this.getExtensionVersion()
-                }
+                category: 'development',
+                priority: 'medium',
+                source: 'vscode-extension'
             })
         });
+        if (response.status === 429) {
+            throw new Error('UPGRADE_REQUIRED');
+        }
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
     }
     extractTitle(content) {
-        // Extract first line or first 50 characters as title
         const lines = content.split('\n');
         if (lines.length > 0 && lines[0].trim()) {
             const title = lines[0].trim();
@@ -180,7 +160,7 @@ class ContextKeeperAPI {
     async getUsage() {
         const { apiEndpoint, sessionId } = this.getConfig();
         try {
-            const response = await (0, node_fetch_1.default)(`${apiEndpoint}/usage`, {
+            const response = await fetch(`${apiEndpoint}/usage`, {
                 method: 'GET',
                 headers: {
                     'x-session-id': sessionId,
@@ -189,19 +169,13 @@ class ContextKeeperAPI {
                 }
             });
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                throw new Error(`API request failed: ${response.status}`);
             }
             const data = await response.json();
-            return {
-                used: data.used || 0,
-                limit: data.limit || 50
-            };
+            return { used: data.used || 0, limit: data.limit || 50 };
         }
-        catch (error) {
-            return {
-                used: 0,
-                limit: 50
-            };
+        catch {
+            return { used: 0, limit: 50 };
         }
     }
     async getDashboardUrl() {
